@@ -1,0 +1,219 @@
+--a
+create function increasein1(a int)
+    returns int as
+$$
+begin
+    return a + 1;
+end;
+$$
+    language plpgsql;
+select increasein1(2);
+
+--b
+create function sumoftwo(a int, b int)
+    returns int as
+$$
+begin
+    return a + b;
+end;
+$$
+    language plpgsql;
+
+--c
+create function divisiblebytwo(a int)
+    returns boolean as
+$$
+begin
+    if a % 2 = 0 then
+        return true;
+    else
+        return false;
+    end if;
+end;
+$$
+    language plpgsql;
+
+
+--d
+create function validity(a varchar)
+    returns boolean as
+$$
+begin
+    if length(a) > 8 then
+        return true;
+    else
+        return false ;
+    end if;
+end ;
+$$
+    language plpgsql;
+
+--e
+create function currency(a int, out euro int, out dollar int) as
+$$
+begin
+    euro = a * 497;
+    dollar = a * 473;
+
+end;
+$$
+    language plpgsql;
+
+--2a
+create function currenttime()
+    returns trigger as
+$$
+begin
+    raise notice '%',now();
+    return new;
+end;
+$$
+    language plpgsql;
+create trigger currenttime_trigger
+    before insert
+    on table22
+    for each row
+execute procedure currenttime();
+
+--2b
+create function age()
+    returns trigger as
+$$
+begin
+    raise notice '%', age(now(), new.t);
+    return new;
+end;
+$$
+    language plpgsql;
+create trigger age_trigger
+    before insert
+    on table23
+    for each row
+execute procedure age();
+
+--2c
+create function tax()
+    returns trigger as
+$$
+begin
+    new.price = new.price * 1.12;
+    return new;
+end;
+$$
+    language plpgsql;
+create trigger tax_trigger
+    before insert
+    on table24
+    for each row
+execute procedure tax();
+
+--2d
+
+create function stop()
+    returns trigger as
+$$
+begin
+    raise exception 'Deletion is not allowed';
+end;
+$$
+    language plpgsql;
+
+create trigger stop_trigger
+    before delete
+    on table25
+execute procedure stop();
+
+--2e
+
+create function call()
+    returns trigger as
+$$
+begin
+    raise notice '%', validity(new.s);
+    raise notice '%', currency(new.a);
+    return new;
+end;
+$$
+    language plpgsql;
+
+create trigger call_trigger
+    before insert
+    on table26
+    for each row
+execute procedure call();
+
+
+create table
+    work(id int ,
+    name varchar,
+    date_of_birth date,
+    age int,
+    salary int,
+    workexperience int,
+    discount int);
+
+
+create function
+    tasks(id int,
+    name varchar,
+    date_of_birth date,
+    age int,
+    inout salary int,
+    workexperience int,
+    out discount int) as
+$$
+declare
+    count int;
+begin
+    discount = 10;
+    count = workexperience/2;
+    for step in 1..count loop
+        salary = salary * 1.1;
+    end loop;
+    count = workexperience/5;
+    for step in 1..count loop
+        discount = discount * 1.01;
+    end loop;
+    insert into work values(id, name, date_of_birth, age, salary, workexperience, discount);
+end;
+$$
+language plpgsql;
+
+select * from tasks(1, 'warkow', '1997-03-02', 25, 19000, 17    );
+
+
+--b
+
+create or replace function
+    tasks2(id int,
+    name varchar,
+    date_of_birth date,
+    age int,
+    inout salary int,
+    workexperience int,
+    out discount numeric) as
+$$
+declare
+    count int;
+begin
+    if age >= 40 then salary = salary * 1.15;
+    end if;
+    discount = 10;
+    count = workexperience/2;
+    for step in 1..count loop
+        salary = salary * 1.1;
+    end loop;
+    count = workexperience/5;
+    for step in 1..count loop
+        discount = discount * 1.01;
+    end loop;
+    if workexperience > 8 then salary = salary * 1.15;
+    end if;
+    if workexperience > 8 then discount = 20;
+    end if;
+    insert into work values(id, name, date_of_birth, age, salary, workexperience, discount);
+end;
+$$
+language plpgsql;
+
+select * from tasks2(2, 'batyr', '2002-03-02', 20, 10000, 4);
